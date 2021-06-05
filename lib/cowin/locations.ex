@@ -11,13 +11,14 @@ defmodule Cowin.Locations do
   @districts_endpoint "/v2/admin/location/districts/"
 
   @type state :: %{
-          id: number,
-          name: String.t(),
+          state_id: number,
+          state_name: String.t(),
           districts: %{optional(String.t()) => district}
         }
   @type district :: %{
-          id: number,
-          name: String.t(),
+          district_id: number,
+          district_name: String.t(),
+          district_name_l: String.t(),
           state_id: number
         }
   @type sd_map :: %{optional(String.t()) => state}
@@ -58,21 +59,12 @@ defmodule Cowin.Locations do
            }}
           | {:error, any}
   def get_states() do
-    now = Timex.now()
+    fetch_time = Timex.now()
 
     get(@states_endpoint)
     |> case do
       {:ok, %Tesla.Env{status: 200, body: body}} ->
-        {:ok,
-         %{
-           ttl: body["ttl"],
-           fetch_time: now,
-           states:
-             body["states"]
-             |> Enum.map(fn %{"state_id" => id, "state_name" => name} ->
-               %{id: id, name: name}
-             end)
-         }}
+        {:ok, Map.put(body, :fetch_time, fetch_time)}
 
       _ ->
         {:error, "An error occurred fetching states from the CoWIN API"}
@@ -87,24 +79,21 @@ defmodule Cowin.Locations do
            %{
              ttl: number,
              fetch_time: DateTime.t(),
-             states: list(state)
+             districts: list(district)
            }}
           | {:error, any}
   def get_districts(state_id) do
-    now = Timex.now()
+    fetch_time = Timex.now()
 
     get(@districts_endpoint <> "#{state_id}")
     |> case do
       {:ok, %Tesla.Env{status: 200, body: body}} ->
-        %{
-          ttl: body["ttl"],
-          fetch_time: now,
-          districts:
-            body["districts"]
-            |> Enum.map(fn %{"district_id" => id, "district_name" => name} ->
-              %{id: id, name: name, state_id: state_id}
-            end)
-        }
+        {:ok,
+         %{
+           body
+           | districts: body[:districts] |> Enum.map(fn d -> Map.put(d, :state_id, state_id) end)
+         }
+         |> Map.put(:fetch_time, fetch_time)}
 
       _ ->
         {:error, "An error occurred fetching districts from the CoWIN API"}
@@ -117,13 +106,13 @@ defmodule Cowin.Locations do
     |> Enum.into(
       %{},
       fn state ->
-        {state[:name],
+        {state[:state_name],
          Map.put(
            state,
            :districts,
            districts
-           |> Enum.filter(fn %{state_id: d_sid} -> d_sid == state[:id] end)
-           |> Enum.into(%{}, fn district -> {district[:name], district} end)
+           |> Enum.filter(fn %{state_id: d_sid} -> d_sid == state[:state_id] end)
+           |> Enum.into(%{}, fn district -> {district[:district_name], district} end)
          )}
       end
     )
@@ -135,19 +124,23 @@ defmodule Cowin.Locations do
 
     case get_states() do
       {:ok, states} ->
-        Logger.info("Fetched fresh data from API")
+        districts = states[:states] |> Enum.map(fn %{state_id: id} -> get_districts(id) end)
 
-        districts = states[:states] |> Enum.map(fn %{id: id} -> get_districts(id) end)
-        min_ttl = [states[:ttl] | districts |> Enum.map(fn %{ttl: ttl} -> ttl end)] |> Enum.min()
+        min_ttl =
+          [states[:ttl] | districts |> Enum.map(fn {:ok, %{ttl: ttl}} -> ttl end)] |> Enum.min()
 
         districts_flattened =
-          districts |> Enum.map(fn %{districts: districts} -> districts end) |> Enum.concat()
+          districts
+          |> Enum.map(fn {:ok, %{districts: districts}} -> districts end)
+          |> Enum.concat()
 
         data = %{
           expires_at: fetch_time |> Timex.shift(hours: min_ttl) |> DateTime.to_iso8601(),
           states: states[:states],
           districts: districts_flattened
         }
+
+        Logger.info("Fetched fresh data from API")
 
         # Save to local cache
         with {:ok, json_data} <- Jason.encode_to_iodata(data, pretty: true),

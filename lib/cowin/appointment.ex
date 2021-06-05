@@ -24,9 +24,9 @@ defmodule Cowin.Appointments do
       {:ok, %Tesla.Env{status: 200, body: body}} ->
         {
           :ok,
-          body["sessions"]
-          |> Enum.filter(fn %{"available_capacity" => capacity} -> capacity > 0 end)
-          |> Enum.sort_by(fn %{"available_capacity" => capacity} -> capacity end, :desc)
+          body[:sessions]
+          |> Enum.filter(fn %{available_capacity: capacity} -> capacity > 0 end)
+          |> Enum.sort_by(fn %{available_capacity: capacity} -> capacity end, :desc)
         }
 
       _ ->
