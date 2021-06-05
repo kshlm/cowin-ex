@@ -21,6 +21,7 @@ defmodule Cowin.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:flow, "~> 1.1"},
       {:jason, "~> 1.2"},
       {:tesla, "~>1.4"},
       {:timex, "~> 3.7"},

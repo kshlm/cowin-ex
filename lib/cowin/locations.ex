@@ -27,15 +27,20 @@ defmodule Cowin.Locations do
     Return a map of states and districts. Returns from the local copy if
   available, if not fetches from the CoWIN API.
   """
-  @spec states_districts() :: {:ok, sd_map} | {:error, any}
-  def states_districts() do
-    case load_cache() do
-      {:ok, sd_map} ->
-        {:ok, sd_map}
+  @spec states_districts(boolean) :: {:ok, sd_map} | {:error, any}
+  def states_districts(force_refresh \\ false) do
+    if force_refresh do
+      Logger.info("Refresh forced, fetching again")
+      fetch_and_cache()
+    else
+      case load_cache() do
+        {:ok, sd_map} ->
+          {:ok, sd_map}
 
-      {:error, msg} ->
-        Logger.error(msg)
-        fetch_and_cache()
+        {:error, msg} ->
+          Logger.error(msg)
+          fetch_and_cache()
+      end
     end
   end
 
@@ -124,7 +129,12 @@ defmodule Cowin.Locations do
 
     case get_states() do
       {:ok, states} ->
-        districts = states[:states] |> Enum.map(fn %{state_id: id} -> get_districts(id) end)
+        districts =
+          states[:states]
+          |> Flow.from_enumerable()
+          |> Flow.partition()
+          |> Flow.map(fn %{state_id: id} -> get_districts(id) end)
+          |> Enum.to_list()
 
         min_ttl =
           [states[:ttl] | districts |> Enum.map(fn {:ok, %{ttl: ttl}} -> ttl end)] |> Enum.min()
