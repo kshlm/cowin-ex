@@ -44,7 +44,7 @@ defmodule Cowin.Locations do
   """
   @spec district_id(sd_map, String.t(), String.t()) :: number
   def district_id(sd_map, state, district) do
-    sd_map[state][:districts][district][:id]
+    sd_map[state][:districts][district][:district_id]
   end
 
   @doc """
