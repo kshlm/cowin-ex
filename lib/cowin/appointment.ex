@@ -37,7 +37,7 @@ defmodule Cowin.Appointments do
     get(@district_endpoint,
       query: [
         district_id: district_id,
-        date: Timex.format!(date, "0{D}-0{M}-{YYYY}")
+        date: Timex.format!(date, "{0D}-{0M}-{YYYY}")
       ]
     )
     |> handle_day_resp
