@@ -8,7 +8,7 @@ defmodule Cowin.MixProject do
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      releases: release(),
+      releases: release()
     ]
   end
 
