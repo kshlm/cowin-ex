@@ -29,6 +29,7 @@ defmodule Cowin.MixProject do
       {:flow, "~> 1.1"},
       {:jason, "~> 1.2"},
       {:optimus, "~>0.2"},
+      {:scribe, "~>0.10"},
       {:tesla, "~>1.4"},
       {:timex, "~> 3.7"}
     ]

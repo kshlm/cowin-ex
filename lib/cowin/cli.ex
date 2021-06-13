@@ -16,21 +16,33 @@ defmodule Cowin.CLI do
 
       {[:appointments], %Optimus.ParseResult{options: options}} ->
         %{date: date} = options
+
         with(
           {:ok, sessions} <-
             case options do
-              %{pincode: pincode} when not is_nil(pincode)->
+              %{pincode: pincode} when not is_nil(pincode) ->
                 Cowin.Appointments.by_pincode(pincode, date)
 
-              %{district_id: district_id} when not is_nil(district_id)->
+              %{district_id: district_id} when not is_nil(district_id) ->
                 Cowin.Appointments.by_district(district_id, date)
 
               _ ->
                 {:error, "One of --pincode or --district-id must be given"}
             end
         ) do
-              IO.inspect(sessions)
-              :ok
+          sessions
+          |> Scribe.print(
+            data: [
+              {"ID", :center_id},
+              {"Center", :name},
+              {"Vaccine", :vaccine},
+              {"Age", :min_age_limit},
+              {"Capacity", :available_capacity},
+              {"Dose 1", :available_capacity_dose1},
+              {"Dose 2", :available_capacity_dose2}
+            ],
+            style: Scribe.Style.Pseudo
+          )
         else
           {:err, error} -> {:err, error}
         end

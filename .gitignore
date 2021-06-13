@@ -24,3 +24,5 @@ cowin-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+cowin-states-districts.json
