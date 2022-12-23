@@ -1,5 +1,5 @@
 defmodule Cowin.CLI do
-  @spec main([String.t()]) :: :ok | {:err, any}
+  @spec main([String.t()]) :: :ok | {:error, any}
   def main(args) do
     cli_app()
     |> Optimus.parse!(args)
@@ -10,8 +10,8 @@ defmodule Cowin.CLI do
             %{state: state, district: district} = options
             IO.puts("#{sd |> Cowin.Locations.district_id(state, district)}")
 
-          {:err, error} ->
-            {:err, error}
+          {:error, error} ->
+            {:error, error}
         end
 
       {[:appointments], %Optimus.ParseResult{options: options}} ->
@@ -44,7 +44,7 @@ defmodule Cowin.CLI do
             style: Scribe.Style.Pseudo
           )
         else
-          {:err, error} -> {:err, error}
+          {:error, error} -> {:error, error}
         end
     end
   end
