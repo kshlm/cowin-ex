@@ -30,7 +30,7 @@ defmodule Cowin.MixProject do
       {:jason, "~> 1.2"},
       {:optimus, "~>0.2"},
       {:scribe, "~>0.10"},
-      {:tesla, "~>1.4"},
+      {:tesla, "~>1.5"},
       {:timex, "~> 3.7"}
     ]
   end

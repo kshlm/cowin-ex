@@ -71,8 +71,11 @@ defmodule Cowin.Locations do
       {:ok, %Tesla.Env{status: 200, body: body}} ->
         {:ok, Map.put(body, :fetch_time, fetch_time)}
 
-      _ ->
-        {:error, "An error occurred fetching states from the CoWIN API"}
+      {:ok, result} ->
+        {:error, "Get states request failed: #{result}"}
+
+      {:error, err} ->
+        {:error, "An error occurred fetching states from the CoWIN API: #{err}"}
     end
   end
 
@@ -100,8 +103,11 @@ defmodule Cowin.Locations do
          }
          |> Map.put(:fetch_time, fetch_time)}
 
-      _ ->
-        {:error, "An error occurred fetching districts from the CoWIN API"}
+      {:ok, result} ->
+        {:error, "Get states request failed: #{result}"}
+
+      {:error, err} ->
+        {:error, "An error occurred fetching districts from the CoWIN API: #{err}"}
     end
   end
 

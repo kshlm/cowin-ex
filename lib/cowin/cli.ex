@@ -1,11 +1,16 @@
 defmodule Cowin.CLI do
   @spec main([String.t()]) :: :ok | {:error, any}
   def main(args) do
-    cli_app()
+    cli = cli_app()
+
+    cli
     |> Optimus.parse!(args)
     |> case do
-      {[:district_id], %Optimus.ParseResult{options: options}} ->
-        case Cowin.Locations.states_districts() do
+      {[:district_id], %Optimus.ParseResult{options: options, flags: flags}} ->
+        # Handle distrit-id subcommand
+        %{force_refresh: force_refresh} = flags
+
+        case Cowin.Locations.states_districts(force_refresh) do
           {:ok, sd} ->
             %{state: state, district: district} = options
             IO.puts("#{sd |> Cowin.Locations.district_id(state, district)}")
@@ -15,6 +20,7 @@ defmodule Cowin.CLI do
         end
 
       {[:appointments], %Optimus.ParseResult{options: options}} ->
+        # Handle appointments subcommand
         %{date: date} = options
 
         with(
@@ -46,6 +52,11 @@ defmodule Cowin.CLI do
         else
           {:error, error} -> {:error, error}
         end
+
+      _ ->
+        # Show usage when no args passed
+        cli |> Optimus.Help.help([], 80) |> Enum.map(&IO.puts/1)
+        :ok
     end
   end
 
@@ -66,6 +77,12 @@ defmodule Cowin.CLI do
               long: "district",
               required: true,
               parser: :string
+            ]
+          ],
+          flags: [
+            force_refresh: [
+              long: "force-refresh",
+              multiple: false
             ]
           ]
         ],
