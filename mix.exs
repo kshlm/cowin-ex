@@ -24,7 +24,6 @@ defmodule Cowin.MixProject do
   defp deps do
     [
       {:bakeware, "~> 0.2"},
-      {:burrito, github: "burrito-elixir/burrito"},
       {:castore, "~> 0.1"},
       {:finch, "~> 0.7"},
       {:flow, "~> 1.1"},
@@ -41,16 +40,6 @@ defmodule Cowin.MixProject do
       cowin_ex: [
         name: "cowin-ex",
         steps: [:assemble, &Bakeware.assemble/1]
-      ],
-      cowin_ex_burrito: [
-        steps: [:assemble, &Burrito.wrap/1],
-        burrito: [
-          targets: [
-            macos_arm: [os: :darwin, cpu: :arm64],
-            # linux: [os: :linux, cpu: :x86_64],
-            # windows: [os: :windows, cpu: :x86_64]
-          ],
-        ]
       ]
     ]
   end
